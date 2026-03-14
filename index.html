@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>sunset2</title>
+    <link rel="stylesheet" href="/src/styles.css" />
+  </head>
+  <body>
+    <div id="app" class="app" data-video-ready="0">
+      <video
+        id="bg-video"
+        class="bg-video"
+        autoplay
+        muted
+        loop
+        playsinline
+        preload="auto"
+        poster="/assets/poster.jpg"
+        aria-label="Sunset field background video"
+      >
+        <source src="/assets/sunset2.mp4" type="video/mp4" />
+      </video>
+
+      <div class="poster-fallback" data-poster-fallback aria-hidden="true"></div>
+
+      <div class="overlay overlay-top"></div>
+      <div class="overlay overlay-vignette"></div>
+      <div class="overlay overlay-fog"></div>
+      <div class="overlay overlay-grain"></div>
+
+      <main class="scene" id="scene">
+        <header class="brand">
+          <p class="brand-mark">STEPAN / SUNSET2</p>
+          <p class="hint">Scroll to move</p>
+        </header>
+
+        <section class="stage" aria-label="Immersive project gallery stage">
+          <div id="rail" class="rail" aria-live="off"></div>
+        </section>
+
+        <button id="tap-overlay" class="tap-overlay" hidden>
+          Tap to start
+        </button>
+      </main>
+    </div>
+
+    <script type="module" src="/src/app.js"></script>
+  </body>
+</html>
