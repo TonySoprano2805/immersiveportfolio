@@ -20,6 +20,7 @@ const reduceMotionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
 
 const runtime = {
   driftSpeed: CONFIG.BASE_DRIFT_SPEED,
+  baseVideoRate: CONFIG.BASE_VIDEO_RATE,
   blurMultiplier: 1,
   bobMultiplier: 1
 };
@@ -46,7 +47,7 @@ const gallery = createGallery({
 
 let t = 0;
 let lastFrame = performance.now();
-let scrollVelocity = 0;
+let sharedBoost = 0;
 
 function animate(now) {
   const dt = Math.min(0.05, (now - lastFrame) / 1000);
@@ -56,17 +57,22 @@ function animate(now) {
   input.update(dt);
   const inputState = input.getState();
 
-  scrollVelocity = damp(
-    scrollVelocity,
-    inputState.scrollVelocityTarget,
-    runtimeConfig.SCROLL_DAMPING,
+  // Shared forward boost controls both video speed and card speed.
+  sharedBoost = damp(
+    sharedBoost,
+    inputState.forwardBoostTarget,
+    runtimeConfig.SCROLL_BOOST_DAMPING,
     dt
+  );
+
+  scene.setVideoPlaybackRate(
+    runtime.baseVideoRate + sharedBoost
   );
 
   gallery.update({
     t,
     dt,
-    scrollVelocity,
+    sharedBoost,
     runtime,
     focusId: interactions.getFocusId()
   });

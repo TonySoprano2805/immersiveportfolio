@@ -192,11 +192,12 @@ export function createGallery({ railEl, cardCount, config, interactions }) {
   const update = ({
     t,
     dt,
-    scrollVelocity,
+    sharedBoost,
     runtime,
     focusId
   }) => {
-    const driftSpeed = runtime.driftSpeed + scrollVelocity;
+    const driftSpeed =
+      runtime.driftSpeed + sharedBoost * config.CARD_SPEED_BOOST_MULTIPLIER;
     let maxFocusBlend = 0;
 
     for (let i = 0; i < cards.length; i += 1) {

@@ -82,10 +82,16 @@ export function createScene({ config }) {
     tryPlayVideo();
   };
 
+  const setVideoPlaybackRate = (rate) => {
+    const safeRate = Number.isFinite(rate) ? Math.min(3, Math.max(0.1, rate)) : 1;
+    videoEl.playbackRate = safeRate;
+  };
+
   return {
     appEl,
     railEl,
     setVideoReadyState,
+    setVideoPlaybackRate,
     showTapToStartIfNeeded,
     boot
   };

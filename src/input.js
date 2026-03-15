@@ -5,7 +5,7 @@ export function createInputController({ el }) {
   const state = {
     mouseNX: 0,
     mouseNY: 0,
-    scrollVelocityTarget: 0,
+    forwardBoostTarget: 0,
     isInteracting: false
   };
 
@@ -20,12 +20,15 @@ export function createInputController({ el }) {
   const onWheel = (event) => {
     event.preventDefault();
     markInteracting();
-    state.scrollVelocityTarget += event.deltaY * CONFIG.SCROLL_STRENGTH;
-    state.scrollVelocityTarget = clamp(
-      state.scrollVelocityTarget,
-      -CONFIG.SCROLL_VELOCITY_CLAMP,
-      CONFIG.SCROLL_VELOCITY_CLAMP
-    );
+    if (event.deltaY < 0) {
+      state.forwardBoostTarget +=
+        -event.deltaY * CONFIG.SCROLL_FORWARD_BOOST;
+      state.forwardBoostTarget = clamp(
+        state.forwardBoostTarget,
+        0,
+        CONFIG.MAX_FORWARD_BOOST
+      );
+    }
   };
 
   const onTouchStart = (event) => {
@@ -43,12 +46,15 @@ export function createInputController({ el }) {
     touchLastY = y;
 
     markInteracting();
-    state.scrollVelocityTarget += dy * CONFIG.TOUCH_STRENGTH;
-    state.scrollVelocityTarget = clamp(
-      state.scrollVelocityTarget,
-      -CONFIG.SCROLL_VELOCITY_CLAMP,
-      CONFIG.SCROLL_VELOCITY_CLAMP
-    );
+    if (dy > 0) {
+      state.forwardBoostTarget +=
+        dy * CONFIG.TOUCH_STRENGTH * CONFIG.SCROLL_FORWARD_BOOST;
+      state.forwardBoostTarget = clamp(
+        state.forwardBoostTarget,
+        0,
+        CONFIG.MAX_FORWARD_BOOST
+      );
+    }
   };
 
   const onTouchEnd = () => {
@@ -62,8 +68,8 @@ export function createInputController({ el }) {
   el.addEventListener("touchcancel", onTouchEnd, { passive: true });
 
   const update = (dt) => {
-    state.scrollVelocityTarget = damp(
-      state.scrollVelocityTarget,
+    state.forwardBoostTarget = damp(
+      state.forwardBoostTarget,
       0,
       CONFIG.INPUT_RETURN_DAMPING,
       dt
