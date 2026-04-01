@@ -2,10 +2,37 @@ import { clamp, damp, lerp, mapRange } from "./utils.js";
 
 const PLACEHOLDER_PROJECTS = Array.from({ length: 24 }, (_, idx) => {
   const n = String(idx + 1).padStart(2, "0");
+  const isFilmShowcaseProject = idx === 0;
+  const isEventProject = idx === 1;
+  const isGenesisProject = idx === 2;
+  const isBrandProject = n === "04";
+  const isPantsProject = n === "05";
+
+  let title = `Project ${n}`;
+  let href = null;
+
+  if (isFilmShowcaseProject) {
+    title = "6PM Film Showcase";
+    href = "/projects/film-showcase.html";
+  } else if (isEventProject) {
+    title = "Event";
+    href = "/projects/event.html";
+  } else if (isGenesisProject) {
+    title = "Genesis";
+    href = "/projects/film.html";
+  } else if (isBrandProject) {
+    title = "OUR FRIEND";
+    href = "/projects/brand.html";
+  } else if (isPantsProject) {
+    title = "PANTS";
+    href = "/projects/pants.html";
+  }
+
   return {
     id: `project-${n}`,
-    title: `Project ${n}`,
-    category: idx % 2 === 0 ? "Direction" : "Visual Design"
+    title,
+    category: idx % 2 === 0 ? "Direction" : "Visual Design",
+    href
   };
 });
 
@@ -122,6 +149,18 @@ export function createGallery({ railEl, cardCount, config, interactions }) {
     titleEl.textContent = project.title;
 
     cardEl.append(categoryEl, titleEl);
+
+    if (project.href) {
+      const openLinkEl = document.createElement("a");
+      openLinkEl.className = "project-open-link";
+      openLinkEl.href = project.href;
+      openLinkEl.textContent = "Open project";
+      openLinkEl.addEventListener("click", (event) => {
+        event.stopPropagation();
+      });
+      cardEl.appendChild(openLinkEl);
+    }
+
     railEl.appendChild(cardEl);
 
     const z = config.Z_FAR_START + i * config.Z_SPACING;
@@ -277,6 +316,7 @@ export function createGallery({ railEl, cardCount, config, interactions }) {
       const blend = card.focusBlend;
       const hasFocus = Boolean(focusId);
       const isFocusedCard = focusId === card.id;
+      card.el.dataset.focused = isFocusedCard ? "1" : "0";
 
       const x = lerp(frame.driftX, 0, blend);
       const y = lerp(frame.driftY, config.FOCUS_Y, blend);

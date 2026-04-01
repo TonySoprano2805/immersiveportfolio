@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Event</title>
+    <style>
+      :root {
+        --bg: #050505;
+        --ink: #f2eee8;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font-family: "Avenir Next", "Segoe UI", Arial, sans-serif;
+      }
+
+      .top {
+        margin: 0;
+        padding: 10px 0 8px;
+      }
+
+      .top h1 {
+        margin: 0;
+        font-size: clamp(1.1rem, 2.1vw, 1.6rem);
+        font-weight: 520;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+      }
+
+      .stack {
+        display: grid;
+        gap: 0;
+      }
+
+      .full {
+        margin: 0;
+      }
+
+      .full img {
+        display: block;
+        width: 100%;
+        height: auto;
+      }
+
+      .bottom {
+        margin: 0;
+        padding: 10px 0 12px;
+      }
+
+      .bottom a {
+        color: var(--ink);
+        text-decoration: none;
+        font-size: 0.7rem;
+        letter-spacing: 0.11em;
+        text-transform: uppercase;
+        border-bottom: 1px solid currentColor;
+        padding-bottom: 2px;
+      }
+    </style>
+  </head>
+  <body>
+    <header class="top">
+      <h1>Event</h1>
+    </header>
+
+    <main class="stack">
+      <section class="full">
+        <img src="../assets/projects/event/event1.png" alt="Event image 1" loading="lazy" />
+      </section>
+      <section class="full">
+        <img src="../assets/projects/event/event2.png" alt="Event image 2" loading="lazy" />
+      </section>
+      <section class="full">
+        <img src="../assets/projects/event/event3.png" alt="Event image 3" loading="lazy" />
+      </section>
+      <section class="full">
+        <img src="../assets/projects/event/event4.png" alt="Event image 4" loading="lazy" />
+      </section>
+    </main>
+
+    <footer class="bottom">
+      <a href="../index.html">Back</a>
+    </footer>
+  </body>
+</html>
