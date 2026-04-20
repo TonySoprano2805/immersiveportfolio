@@ -139,8 +139,17 @@ body {
 .brand {
   position: absolute;
   left: clamp(18px, 2.8vw, 36px);
+  right: clamp(18px, 2.8vw, 36px);
   top: clamp(16px, 2.6vw, 30px);
   z-index: 5;
+  pointer-events: none;
+}
+
+.brand-top-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
 }
 
 .brand-mark {
@@ -150,6 +159,22 @@ body {
   font-weight: 540;
   color: var(--ink);
   text-transform: uppercase;
+}
+
+.brand-index {
+  pointer-events: auto;
+  text-decoration: none;
+  opacity: 0.68;
+  transition: opacity 160ms ease;
+}
+
+.brand-index:hover,
+.brand-index:focus-visible {
+  opacity: 0.94;
+}
+
+.brand-index:focus-visible {
+  outline: none;
 }
 
 .hint {

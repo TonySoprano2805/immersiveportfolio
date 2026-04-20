@@ -1,0 +1,635 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Project Index</title>
+    <style>
+      :root {
+        --bg: #060607;
+        --ink: #f1ede8;
+        --ink-soft: rgba(241, 237, 232, 0.58);
+        --ink-faint: rgba(241, 237, 232, 0.34);
+        --row-height: 74;
+      }
+
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        width: 100%;
+        height: 100%;
+      }
+
+      body {
+        margin: 0;
+        background:
+          radial-gradient(125% 86% at 50% 54%, rgba(255, 236, 204, 0.05) 0%, rgba(255, 236, 204, 0) 52%),
+          linear-gradient(180deg, #080809 0%, #050505 100%);
+        color: var(--ink);
+        font-family: "Avenir Next", "Segoe UI Variable", "SF Pro Display", "Helvetica Neue", Arial, sans-serif;
+        -webkit-font-smoothing: antialiased;
+        text-rendering: optimizeLegibility;
+        overflow: hidden;
+      }
+
+      .shell {
+        position: relative;
+        height: 100%;
+        width: 100%;
+        display: grid;
+        place-items: center;
+      }
+
+      .index-layout {
+        width: min(1280px, calc(100vw - 72px));
+        height: min(640px, 78vh);
+        min-height: 440px;
+        display: grid;
+        grid-template-columns: minmax(560px, 1fr) minmax(240px, 360px);
+        gap: clamp(28px, 5.4vw, 96px);
+        align-items: center;
+      }
+
+      .wheel-wrap {
+        position: relative;
+        width: 100%;
+        height: 100%;
+      }
+
+      .guide {
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: 50%;
+        height: 1px;
+        transform: translateY(-0.5px);
+        background: linear-gradient(90deg, transparent 0%, rgba(241, 237, 232, 0.22) 20%, rgba(241, 237, 232, 0.22) 80%, transparent 100%);
+        pointer-events: none;
+      }
+
+      .fade {
+        position: absolute;
+        left: 0;
+        right: 0;
+        height: 120px;
+        pointer-events: none;
+        z-index: 6;
+      }
+
+      .fade.top {
+        top: 0;
+        background: linear-gradient(180deg, rgba(6, 6, 7, 0.98) 10%, rgba(6, 6, 7, 0) 100%);
+      }
+
+      .fade.bottom {
+        bottom: 0;
+        background: linear-gradient(0deg, rgba(6, 6, 7, 0.98) 10%, rgba(6, 6, 7, 0) 100%);
+      }
+
+      .wheel {
+        position: relative;
+        height: 100%;
+        width: 100%;
+        overflow: hidden;
+        cursor: grab;
+        user-select: none;
+        touch-action: none;
+      }
+
+      .wheel.dragging {
+        cursor: grabbing;
+      }
+
+      .row {
+        position: absolute;
+        left: 0;
+        right: 0;
+        display: grid;
+        grid-template-columns: 88px minmax(190px, 310px) 1fr;
+        gap: clamp(12px, 2.2vw, 34px);
+        align-items: center;
+        height: calc(var(--row-height) * 1px);
+        padding: 0 clamp(2px, 1.1vw, 12px);
+        border: 0;
+        margin: 0;
+        text-align: left;
+        background: transparent;
+        color: inherit;
+        transform-origin: center center;
+        will-change: transform, opacity, filter;
+      }
+
+      .row span {
+        line-height: 1;
+        text-transform: uppercase;
+        white-space: nowrap;
+      }
+
+      .year {
+        color: var(--ink-faint);
+        font-size: clamp(0.62rem, 0.78vw, 0.74rem);
+        letter-spacing: 0.13em;
+      }
+
+      .title {
+        color: rgba(241, 237, 232, 0.8);
+        font-size: clamp(0.88rem, 1.1vw, 1.05rem);
+        letter-spacing: 0.12em;
+        font-weight: 510;
+      }
+
+      .category {
+        color: rgba(241, 237, 232, 0.5);
+        font-size: clamp(0.62rem, 0.78vw, 0.74rem);
+        letter-spacing: 0.1em;
+      }
+
+      .row.active .year,
+      .row.active .category {
+        color: var(--ink-soft);
+      }
+
+      .row.active .title {
+        color: var(--ink);
+      }
+
+      .row.clickable {
+        cursor: pointer;
+      }
+
+      .row:not(.clickable) {
+        pointer-events: none;
+      }
+
+      .preview-pane {
+        width: 100%;
+        max-width: 360px;
+        justify-self: end;
+      }
+
+      .preview-media {
+        position: relative;
+        width: 100%;
+        aspect-ratio: 4 / 5;
+        overflow: hidden;
+        background: rgba(255, 255, 255, 0.02);
+      }
+
+      .preview-image {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        opacity: 0.88;
+        transform: scale(1);
+        transition: opacity 300ms ease, transform 560ms cubic-bezier(0.19, 1, 0.22, 1);
+      }
+
+      .preview-image.is-loading {
+        opacity: 0.12;
+        transform: scale(1.02);
+      }
+
+      .preview-meta {
+        margin: 12px 0 0;
+      }
+
+      .preview-title,
+      .preview-category {
+        margin: 0;
+        text-transform: uppercase;
+      }
+
+      .preview-title {
+        color: rgba(241, 237, 232, 0.72);
+        font-size: clamp(0.68rem, 0.84vw, 0.78rem);
+        letter-spacing: 0.14em;
+      }
+
+      .preview-category {
+        margin-top: 7px;
+        color: rgba(241, 237, 232, 0.44);
+        font-size: clamp(0.58rem, 0.72vw, 0.68rem);
+        letter-spacing: 0.1em;
+      }
+
+      @media (max-width: 1100px) {
+        .index-layout {
+          width: min(980px, calc(100vw - 34px));
+          height: auto;
+          min-height: 0;
+          grid-template-columns: 1fr;
+          gap: 26px;
+          justify-items: center;
+        }
+
+        .wheel-wrap {
+          width: 100%;
+          height: min(560px, 70vh);
+          min-height: 380px;
+        }
+
+        .preview-pane {
+          justify-self: center;
+          max-width: min(420px, 86vw);
+        }
+      }
+
+      @media (max-width: 860px) {
+        :root {
+          --row-height: 64;
+        }
+
+        .row {
+          grid-template-columns: 68px minmax(122px, 1fr) minmax(112px, 1fr);
+          gap: 12px;
+        }
+
+        .title {
+          letter-spacing: 0.1em;
+        }
+
+        .category {
+          text-overflow: ellipsis;
+          overflow: hidden;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="shell">
+      <section class="index-layout" aria-label="Project index">
+        <section class="wheel-wrap" aria-label="Project list wheel">
+          <div class="fade top" aria-hidden="true"></div>
+          <div class="fade bottom" aria-hidden="true"></div>
+          <div class="guide" aria-hidden="true"></div>
+          <div class="wheel" id="wheel" aria-live="off"></div>
+        </section>
+
+        <aside class="preview-pane" aria-live="polite">
+          <figure class="preview-media">
+            <img id="preview-image" class="preview-image" src="" alt="" loading="eager" decoding="async" />
+          </figure>
+          <div class="preview-meta">
+            <p id="preview-title" class="preview-title"></p>
+            <p id="preview-category" class="preview-category"></p>
+          </div>
+        </aside>
+      </section>
+    </main>
+
+    <script>
+      (() => {
+        const projects = [
+          {
+            year: "2025",
+            title: "Event",
+            category: "Visual Story",
+            href: "/projects/event.html",
+            previewImage: "/assets/projects/event/event1.png",
+          },
+          {
+            year: "2025",
+            title: "Genesis",
+            category: "Short Film",
+            href: "/projects/film.html",
+            previewImage: "/assets/projects/film/still1.png",
+          },
+          {
+            year: "2026",
+            title: "OUR FRIEND",
+            category: "Brand / Film",
+            href: "/projects/brand.html",
+            previewImage: "/assets/projects/brand/yoichi1.jpg",
+          },
+          {
+            year: "2025",
+            title: "PANTS",
+            category: "Garment Design",
+            href: "/projects/pants.html",
+            previewImage: "/assets/projects/pants/pants1.png",
+          },
+        ];
+
+        const wheelEl = document.getElementById("wheel");
+        const previewImageEl = document.getElementById("preview-image");
+        const previewTitleEl = document.getElementById("preview-title");
+        const previewCategoryEl = document.getElementById("preview-category");
+
+        if (!wheelEl || !previewImageEl || !previewTitleEl || !previewCategoryEl || projects.length === 0) {
+          return;
+        }
+
+        let rowHeight = Number.parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--row-height")) || 74;
+
+        let currentOffset = 0;
+        let targetOffset = 0;
+        let velocity = 0;
+
+        let isPointerDown = false;
+        let isDragging = false;
+        let pointerId = null;
+        let pointerTravel = 0;
+        let lastPointerY = 0;
+        let lastPointerT = 0;
+
+        let lastFrameTime = performance.now();
+        let snapDeadline = 0;
+        let activeVirtualIndex = 0;
+        let activeProjectIndex = 0;
+        let lastDragEndedAt = -1;
+        let previewRequestId = 0;
+
+        const dragThreshold = 3;
+        const rowPool = [];
+        const bufferRows = 8;
+
+        function mod(n, m) {
+          return ((n % m) + m) % m;
+        }
+
+        function scheduleSnap(delay = 140) {
+          snapDeadline = performance.now() + delay;
+        }
+
+        function clearSnap() {
+          snapDeadline = 0;
+        }
+
+        function openProjectByIndex(projectIndex) {
+          const project = projects[projectIndex];
+          if (project) {
+            window.location.href = project.href;
+          }
+        }
+
+        function updatePreview(projectIndex) {
+          if (projectIndex === activeProjectIndex && previewImageEl.dataset.current === projects[projectIndex].previewImage) {
+            return;
+          }
+
+          activeProjectIndex = projectIndex;
+          const project = projects[projectIndex];
+
+          previewTitleEl.textContent = project.title;
+          previewCategoryEl.textContent = project.year + " / " + project.category;
+          previewImageEl.alt = project.title + " preview";
+
+          const nextSrc = project.previewImage;
+          const fallbackSrc = project.previewFallback || "/assets/poster.jpg";
+
+          previewRequestId += 1;
+          const requestId = previewRequestId;
+
+          previewImageEl.classList.add("is-loading");
+
+          const preload = new Image();
+          preload.onload = () => {
+            if (requestId !== previewRequestId) {
+              return;
+            }
+            previewImageEl.dataset.current = nextSrc;
+            previewImageEl.src = nextSrc;
+            previewImageEl.classList.remove("is-loading");
+          };
+          preload.onerror = () => {
+            if (requestId !== previewRequestId) {
+              return;
+            }
+
+            if (fallbackSrc === nextSrc) {
+              previewImageEl.classList.remove("is-loading");
+              return;
+            }
+
+            const fallbackLoad = new Image();
+            fallbackLoad.onload = () => {
+              if (requestId !== previewRequestId) {
+                return;
+              }
+              previewImageEl.dataset.current = fallbackSrc;
+              previewImageEl.src = fallbackSrc;
+              previewImageEl.classList.remove("is-loading");
+            };
+            fallbackLoad.onerror = () => {
+              if (requestId !== previewRequestId) {
+                return;
+              }
+              previewImageEl.classList.remove("is-loading");
+            };
+            fallbackLoad.src = fallbackSrc;
+          };
+          preload.src = nextSrc;
+        }
+
+        function syncRowPoolSize() {
+          const needed = bufferRows * 2 + 1;
+
+          while (rowPool.length < needed) {
+            const row = document.createElement("button");
+            row.type = "button";
+            row.className = "row";
+            row.innerHTML = "<span class=\"year\"></span><span class=\"title\"></span><span class=\"category\"></span>";
+            row.addEventListener("click", onRowClick);
+            wheelEl.appendChild(row);
+            rowPool.push(row);
+          }
+
+          while (rowPool.length > needed) {
+            const row = rowPool.pop();
+            row.removeEventListener("click", onRowClick);
+            row.remove();
+          }
+        }
+
+        function onRowClick(event) {
+          const row = event.currentTarget;
+
+          if (!(row instanceof HTMLElement) || !row.classList.contains("clickable")) {
+            return;
+          }
+
+          if (lastDragEndedAt > 0 && performance.now() - lastDragEndedAt < 140) {
+            return;
+          }
+
+          const projectIndex = Number.parseInt(row.dataset.projectIndex || "0", 10);
+          openProjectByIndex(projectIndex);
+        }
+
+        function updateRows() {
+          const height = wheelEl.clientHeight;
+          const centerY = height * 0.5;
+
+          const centerRow = currentOffset / rowHeight;
+          const startIndex = Math.floor(centerRow) - bufferRows;
+
+          activeVirtualIndex = Math.round(currentOffset / rowHeight);
+          const centeredProjectIndex = mod(activeVirtualIndex, projects.length);
+
+          if (centeredProjectIndex !== activeProjectIndex) {
+            updatePreview(centeredProjectIndex);
+          }
+
+          for (let i = 0; i < rowPool.length; i += 1) {
+            const virtualIndex = startIndex + i;
+            const projectIndex = mod(virtualIndex, projects.length);
+            const project = projects[projectIndex];
+            const row = rowPool[i];
+
+            const yOffset = virtualIndex * rowHeight - currentOffset;
+            const normalized = yOffset / (height * 0.5);
+            const clamped = Math.max(-1.6, Math.min(1.6, normalized));
+            const abs = Math.abs(clamped);
+
+            const angle = clamped * 32;
+            const scale = 1 - abs * 0.094;
+            const translateZ = -abs * 20;
+            const blur = abs * 1.85;
+            const opacity = Math.max(0, 1 - Math.pow(abs, 1.35) * 0.9);
+
+            const top = centerY + yOffset - rowHeight * 0.5;
+
+            const centered = virtualIndex === activeVirtualIndex;
+            const closeToCenter = Math.abs(currentOffset - activeVirtualIndex * rowHeight) <= rowHeight * 0.26;
+            const clickable = centered && closeToCenter;
+
+            row.dataset.virtualIndex = String(virtualIndex);
+            row.dataset.projectIndex = String(projectIndex);
+
+            row.children[0].textContent = project.year;
+            row.children[1].textContent = project.title;
+            row.children[2].textContent = project.category;
+
+            row.style.top = top + "px";
+            row.style.opacity = String(opacity);
+            row.style.filter = blur > 0.05 ? "blur(" + blur.toFixed(2) + "px)" : "none";
+            row.style.transform = "perspective(960px) rotateX(" + angle.toFixed(3) + "deg) scale(" + scale.toFixed(4) + ") translateZ(" + translateZ.toFixed(2) + "px)";
+
+            row.classList.toggle("active", projectIndex === centeredProjectIndex && centered);
+            row.classList.toggle("clickable", clickable);
+            row.setAttribute("aria-disabled", clickable ? "false" : "true");
+            row.tabIndex = clickable ? 0 : -1;
+          }
+        }
+
+        function step(now) {
+          const dt = Math.min(2.2, (now - lastFrameTime) / 16.6667);
+          lastFrameTime = now;
+
+          if (!isDragging) {
+            const spring = (targetOffset - currentOffset) * 0.11 * dt;
+            velocity += spring;
+            velocity *= Math.pow(0.82, dt);
+            currentOffset += velocity * dt;
+          }
+
+          if (!isDragging && snapDeadline > 0 && now >= snapDeadline) {
+            targetOffset = Math.round(targetOffset / rowHeight) * rowHeight;
+
+            if (Math.abs(targetOffset - currentOffset) < 0.12 && Math.abs(velocity) < 0.12) {
+              currentOffset = targetOffset;
+              velocity = 0;
+              snapDeadline = 0;
+            }
+          }
+
+          updateRows();
+          requestAnimationFrame(step);
+        }
+
+        wheelEl.addEventListener(
+          "wheel",
+          (event) => {
+            event.preventDefault();
+            clearSnap();
+            targetOffset += event.deltaY * 0.54;
+            velocity += event.deltaY * 0.018;
+            scheduleSnap(150);
+          },
+          { passive: false }
+        );
+
+        wheelEl.addEventListener("pointerdown", (event) => {
+          isPointerDown = true;
+          isDragging = false;
+          pointerId = event.pointerId;
+          pointerTravel = 0;
+          lastPointerY = event.clientY;
+          lastPointerT = performance.now();
+          velocity = 0;
+          clearSnap();
+        });
+
+        wheelEl.addEventListener("pointermove", (event) => {
+          if (!isPointerDown || event.pointerId !== pointerId) {
+            return;
+          }
+
+          const now = performance.now();
+          const deltaY = lastPointerY - event.clientY;
+          const dt = Math.max(8, now - lastPointerT);
+
+          pointerTravel += Math.abs(deltaY);
+
+          if (!isDragging && pointerTravel > dragThreshold) {
+            isDragging = true;
+            wheelEl.classList.add("dragging");
+            wheelEl.setPointerCapture(pointerId);
+          }
+
+          if (isDragging) {
+            currentOffset += deltaY;
+            targetOffset += deltaY;
+            velocity = (deltaY / dt) * 15;
+          }
+
+          lastPointerY = event.clientY;
+          lastPointerT = now;
+        });
+
+        function endPointer(event) {
+          if (!isPointerDown || event.pointerId !== pointerId) {
+            return;
+          }
+
+          const wasDragging = isDragging;
+
+          isPointerDown = false;
+          isDragging = false;
+          wheelEl.classList.remove("dragging");
+
+          if (pointerId !== null && wheelEl.hasPointerCapture(pointerId)) {
+            wheelEl.releasePointerCapture(pointerId);
+          }
+
+          pointerId = null;
+
+          if (wasDragging) {
+            lastDragEndedAt = performance.now();
+            scheduleSnap(120);
+          }
+        }
+
+        wheelEl.addEventListener("pointerup", endPointer);
+        wheelEl.addEventListener("pointercancel", endPointer);
+        wheelEl.addEventListener("pointerleave", endPointer);
+
+        window.addEventListener("resize", () => {
+          rowHeight = Number.parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--row-height")) || 74;
+          scheduleSnap(10);
+        });
+
+        syncRowPoolSize();
+        updatePreview(0);
+        updateRows();
+        requestAnimationFrame(step);
+      })();
+    </script>
+  </body>
+</html>
