@@ -2,11 +2,8 @@
   --bg: #060607;
   --ink: #f2eee8;
   --ink-muted: rgba(242, 238, 232, 0.78);
-  --card-fill: rgba(247, 243, 235, 0.93);
-  --card-border: rgba(255, 255, 255, 0.36);
-  --card-shadow: rgba(8, 8, 12, 0.36);
-  --card-width: 340px;
-  --card-height: 440px;
+  --thumb-max-width: 480px;
+  --thumb-max-height: 330px;
 }
 
 *,
@@ -138,39 +135,47 @@ body {
 
 .brand {
   position: absolute;
-  left: clamp(18px, 2.8vw, 36px);
-  right: clamp(18px, 2.8vw, 36px);
+  left: 50%;
   top: clamp(16px, 2.6vw, 30px);
+  transform: translateX(-50%);
   z-index: 5;
-  pointer-events: none;
-}
-
-.brand-top-row {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 16px;
+  pointer-events: auto;
+  text-align: center;
 }
 
 .brand-mark {
   margin: 0;
-  font-size: clamp(0.72rem, 0.75vw, 0.82rem);
-  letter-spacing: 0.22em;
-  font-weight: 540;
+  display: inline-block;
+  font-size: clamp(1.02rem, 1.55vw, 1.38rem);
+  letter-spacing: 0.165em;
+  font-weight: 480;
   color: var(--ink);
   text-transform: uppercase;
+  white-space: nowrap;
+  transform: scaleX(1.06) scaleY(0.9);
+  transform-origin: center;
 }
 
 .brand-index {
+  display: block;
+  margin-top: 10px;
   pointer-events: auto;
+  font-size: clamp(0.78rem, 0.95vw, 0.95rem);
+  letter-spacing: 0.13em;
+  font-weight: 460;
+  color: rgba(242, 238, 232, 0.82);
+  text-transform: uppercase;
   text-decoration: none;
-  opacity: 0.68;
-  transition: opacity 160ms ease;
+  opacity: 0.82;
+  transform: scaleX(1.04) scaleY(0.92);
+  transform-origin: center;
+  transition: opacity 160ms ease, color 160ms ease;
 }
 
 .brand-index:hover,
 .brand-index:focus-visible {
-  opacity: 0.94;
+  opacity: 1;
+  color: var(--ink);
 }
 
 .brand-index:focus-visible {
@@ -178,11 +183,24 @@ body {
 }
 
 .hint {
-  margin: 12px 0 0;
+  position: absolute;
+  left: 50%;
+  bottom: clamp(72px, 9vh, 108px);
+  transform: translateX(-50%);
+  margin: 0;
+  padding: 9px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(242, 238, 232, 0.28);
+  background: rgba(7, 7, 10, 0.2);
+  backdrop-filter: blur(3px);
   color: var(--ink-muted);
-  font-size: 0.72rem;
-  letter-spacing: 0.1em;
+  font-size: clamp(0.8rem, 1.05vw, 0.96rem);
+  letter-spacing: 0.13em;
+  font-weight: 520;
   text-transform: uppercase;
+  white-space: nowrap;
+  z-index: 5;
+  pointer-events: none;
   animation: hint-fade 6.2s ease forwards;
 }
 
@@ -218,73 +236,113 @@ body {
   position: absolute;
   left: 50%;
   top: 50%;
-  width: var(--card-width);
-  height: var(--card-height);
-  margin-left: calc(var(--card-width) * -0.5);
-  margin-top: calc(var(--card-height) * -0.5);
-  border-radius: 18px;
-  border: 1px solid var(--card-border);
-  background:
-    linear-gradient(
-      165deg,
-      rgba(255, 255, 255, 0.5) 0%,
-      rgba(255, 255, 255, 0.1) 42%,
-      rgba(255, 255, 255, 0.03) 100%
-    ),
-    var(--card-fill);
-  box-shadow:
-    0 24px 70px -30px var(--card-shadow),
-    0 8px 22px -12px rgba(11, 11, 15, 0.4),
-    inset 0 1px 0 rgba(255, 255, 255, 0.65);
-  padding: 30px 28px;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
+  width: 0;
+  height: 0;
+  margin: 0;
   backface-visibility: hidden;
   transform-style: preserve-3d;
   will-change: transform, opacity, filter;
   user-select: none;
-  cursor: pointer;
 }
 
-.project-card::after {
+.project-media {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  border-radius: 12px;
+  overflow: hidden;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  box-shadow:
+    0 20px 44px -26px rgba(5, 6, 10, 0.82),
+    0 8px 20px -16px rgba(5, 6, 9, 0.65);
+  pointer-events: auto;
+}
+
+.project-media::after {
   content: "";
   position: absolute;
-  inset: 1px;
-  border-radius: 16px;
+  inset: 0;
   pointer-events: none;
+  background:
+    linear-gradient(
+      140deg,
+      rgba(255, 255, 255, 0.2) 0%,
+      rgba(255, 255, 255, 0.06) 18%,
+      rgba(255, 255, 255, 0) 34%
+    ),
+    linear-gradient(
+      180deg,
+      rgba(8, 8, 10, 0) 50%,
+      rgba(8, 8, 10, 0.18) 76%,
+      rgba(8, 8, 10, 0.42) 100%
+    );
+}
+
+.project-image {
+  display: block;
+  width: auto;
+  height: auto;
+  max-width: var(--thumb-max-width);
+  max-height: var(--thumb-max-height);
+  object-fit: contain;
+}
+
+.project-meta {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 2;
+  padding: 34px 12px 12px;
   background: linear-gradient(
-    150deg,
-    rgba(255, 255, 255, 0.42) 0%,
-    rgba(255, 255, 255, 0.1) 36%,
-    rgba(255, 255, 255, 0) 52%
+    180deg,
+    rgba(7, 7, 10, 0) 0%,
+    rgba(7, 7, 10, 0.62) 62%,
+    rgba(7, 7, 10, 0.8) 100%
   );
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 180ms ease;
+}
+
+.project-card[data-focused="1"] .project-meta {
+  opacity: 1;
+  pointer-events: auto;
 }
 
 .project-category {
-  margin: 0 0 8px;
-  font-size: 0.63rem;
-  letter-spacing: 0.18em;
+  margin: 0 0 5px;
+  font-size: 0.58rem;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: rgba(44, 40, 36, 0.56);
+  color: rgba(238, 232, 224, 0.66);
   font-weight: 520;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .project-title {
   margin: 0;
-  font-size: clamp(1.2rem, 1.8vw, 1.72rem);
+  font-size: clamp(0.86rem, 1.1vw, 1.02rem);
   letter-spacing: 0.04em;
-  color: rgba(20, 16, 14, 0.88);
+  color: rgba(245, 240, 232, 0.92);
   font-weight: 520;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .project-open-link {
-  margin-top: 12px;
+  margin-top: 8px;
+  display: inline-block;
   align-self: flex-start;
-  font-size: 0.64rem;
-  letter-spacing: 0.12em;
+  font-size: 0.58rem;
+  letter-spacing: 0.11em;
   text-transform: uppercase;
-  color: rgba(20, 16, 14, 0.84);
+  color: rgba(245, 240, 232, 0.9);
   text-decoration: none;
   border-bottom: 1px solid currentColor;
   padding-bottom: 2px;
@@ -323,16 +381,15 @@ body {
 
 @media (max-width: 900px) {
   :root {
-    --card-width: min(76vw, 320px);
-    --card-height: min(54vh, 400px);
+    --thumb-max-width: min(82vw, 360px);
+    --thumb-max-height: min(56vw, 250px);
   }
 
-  .project-card {
-    border-radius: 16px;
+  .project-media {
+    border-radius: 10px;
     box-shadow:
-      0 18px 42px -26px rgba(7, 7, 10, 0.36),
-      0 6px 18px -12px rgba(7, 7, 10, 0.34),
-      inset 0 1px 0 rgba(255, 255, 255, 0.56);
+      0 16px 30px -22px rgba(7, 7, 10, 0.4),
+      0 8px 16px -14px rgba(7, 7, 10, 0.32);
   }
 
   .overlay-grain {

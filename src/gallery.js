@@ -1,40 +1,101 @@
 import { clamp, damp, lerp, mapRange } from "./utils.js";
 
-const PLACEHOLDER_PROJECTS = Array.from({ length: 24 }, (_, idx) => {
-  const n = String(idx + 1).padStart(2, "0");
-  const isFilmShowcaseProject = idx === 0;
-  const isEventProject = idx === 1;
-  const isGenesisProject = idx === 2;
-  const isBrandProject = n === "04";
-  const isPantsProject = n === "05";
+const THUMBNAIL_GROUPS = {
+  genesis: [
+    "/assets/projects/floating thumbnails/genesisthumb.png",
+    "/assets/projects/floating thumbnails/genesisthumb2.png",
+    "/assets/projects/floating thumbnails/genesisthumb3.png",
+    "/assets/projects/floating thumbnails/genesisthumb4.png"
+  ],
+  brand: [
+    "/assets/projects/floating thumbnails/brandthumb1.jpg",
+    "/assets/projects/floating thumbnails/brandthumb2.jpeg",
+    "/assets/projects/floating thumbnails/brandthumb3.jpeg",
+    "/assets/projects/floating thumbnails/brandthumb4.jpeg"
+  ],
+  showcase: [
+    "/assets/projects/floating thumbnails/eventthumb1.png",
+    "/assets/projects/floating thumbnails/eventthumb2.png"
+  ],
+  pants: [
+    "/assets/projects/floating thumbnails/pantsthumb1.png",
+    "/assets/projects/floating thumbnails/pantsthumb2.JPG"
+  ]
+};
 
-  let title = `Project ${n}`;
-  let href = null;
+const PROJECT_DEFINITIONS = [
+  {
+    key: "showcase",
+    title: "6PM Film Showcase",
+    category: "Direction",
+    href: "/projects/film-showcase.html",
+    thumbnails: THUMBNAIL_GROUPS.showcase
+  },
+  {
+    key: "genesis",
+    title: "Genesis",
+    category: "Direction",
+    href: "/projects/film.html",
+    thumbnails: THUMBNAIL_GROUPS.genesis
+  },
+  {
+    key: "brand",
+    title: "OUR FRIEND",
+    category: "Visual Design",
+    href: "/projects/brand.html",
+    thumbnails: THUMBNAIL_GROUPS.brand
+  },
+  {
+    key: "pants",
+    title: "PANTS",
+    category: "Visual Design",
+    href: "/projects/pants.html",
+    thumbnails: THUMBNAIL_GROUPS.pants
+  }
+];
 
-  if (isFilmShowcaseProject) {
-    title = "6PM Film Showcase";
-    href = "/projects/film-showcase.html";
-  } else if (isEventProject) {
-    title = "Event";
-    href = "/projects/event.html";
-  } else if (isGenesisProject) {
-    title = "Genesis";
-    href = "/projects/film.html";
-  } else if (isBrandProject) {
-    title = "OUR FRIEND";
-    href = "/projects/brand.html";
-  } else if (isPantsProject) {
-    title = "PANTS";
-    href = "/projects/pants.html";
+const CLUSTER_SIZE = 3;
+
+const PROJECT_LAYERS = [
+  { x: -0.9, y: -0.14, z: -760 },
+  { x: 0.02, y: -0.04, z: -1260 },
+  { x: 0.9, y: -0.12, z: -1760 },
+  { x: 0.08, y: 0.18, z: -2260 }
+];
+
+const CLUSTER_SLOT_OFFSETS = [
+  { x: -198, y: -58, z: -84, scale: 0.98 },
+  { x: 0, y: 28, z: 0, scale: 1.06 },
+  { x: 202, y: -42, z: 78, scale: 0.96 }
+];
+
+function buildFloatingItems(cardCount) {
+  const baseItems = [];
+  const projectCount = PROJECT_DEFINITIONS.length;
+  for (let projectIndex = 0; projectIndex < projectCount; projectIndex += 1) {
+    const project = PROJECT_DEFINITIONS[projectIndex];
+    const slotCount = Math.max(1, Math.min(CLUSTER_SIZE, project.thumbnails.length));
+    for (let slotIndex = 0; slotIndex < slotCount; slotIndex += 1) {
+      const thumbIndex = slotIndex;
+      const thumbSrc = project.thumbnails[thumbIndex];
+
+      baseItems.push({
+        baseId: `${project.key}-cluster-slot-${slotIndex + 1}`,
+        projectKey: project.key,
+        projectIndex,
+        layerIndex: projectIndex,
+        slotCount,
+        slotIndex,
+        title: project.title,
+        category: project.category,
+        href: project.href,
+        thumbnailSrc: thumbSrc
+      });
+    }
   }
 
-  return {
-    id: `project-${n}`,
-    title,
-    category: idx % 2 === 0 ? "Direction" : "Visual Design",
-    href
-  };
-});
+  return baseItems.slice(0, Math.max(CLUSTER_SIZE, Math.min(cardCount, baseItems.length)));
+}
 
 function randomIn(min, max) {
   return min + Math.random() * (max - min);
@@ -80,16 +141,96 @@ function getNearbyCards({ cards, z, ignoreId, config }) {
   return nearby.slice(0, config.SPAWN_NEARBY_LIMIT).map((entry) => entry.card);
 }
 
-function pickSpawnPoint({ cards, config, z, ignoreId }) {
+function getClusterAnchor(layerIndex) {
+  return (
+    PROJECT_LAYERS[layerIndex] || {
+      x: 0,
+      y: 0,
+      z: -1100
+    }
+  );
+}
+
+function getSlotOffset(slotIndex) {
+  return CLUSTER_SLOT_OFFSETS[slotIndex] || CLUSTER_SLOT_OFFSETS[1];
+}
+
+function getSlotOffsetForCount(slotIndex, slotCount) {
+  if (slotCount <= 1) {
+    return CLUSTER_SLOT_OFFSETS[1];
+  }
+  if (slotCount === 2) {
+    return slotIndex === 0
+      ? { x: -158, y: -36, z: -56, scale: 1 }
+      : { x: 162, y: -12, z: 54, scale: 1 };
+  }
+  return getSlotOffset(slotIndex);
+}
+
+function getFrontSlotIndex(slotCount) {
+  return Math.max(0, slotCount - 1);
+}
+
+function getLayerThumbnails(layerIndex) {
+  const project = PROJECT_DEFINITIONS[layerIndex];
+  if (!project || !Array.isArray(project.thumbnails) || !project.thumbnails.length) {
+    return [];
+  }
+  return project.thumbnails;
+}
+
+function getThumbnailForSlot({ layerIndex, slotIndex, orderOffset }) {
+  const thumbnails = getLayerThumbnails(layerIndex);
+  if (!thumbnails.length) return "";
+  const thumbIndex = (slotIndex + orderOffset) % thumbnails.length;
+  return thumbnails[thumbIndex];
+}
+
+function getClusterBaseZ({ layerIndex }) {
+  const anchor = getClusterAnchor(layerIndex);
+  return anchor.z + randomIn(-18, 18);
+}
+
+function pickSpawnPoint({
+  cards,
+  config,
+  z,
+  ignoreId,
+  projectKey,
+  layerIndex,
+  slotIndex,
+  slotCount
+}) {
   const [yMin, yMax] = getYBounds(config);
   const nearbyCards = getNearbyCards({ cards, z, ignoreId, config });
   let bestCandidate = null;
   let bestDistance = -Infinity;
 
+  const anchor = getClusterAnchor(layerIndex);
+  const slotOffset = getSlotOffsetForCount(slotIndex, slotCount);
+
+  const anchorX = clamp(
+    anchor.x * config.X_RANGE,
+    -config.X_RANGE * 0.99,
+    config.X_RANGE * 0.99
+  );
+  const anchorY = config.Y_CENTER + anchor.y * config.Y_RANGE * 2.1;
+
+  const localXSpread = 18;
+  const localYSpread = 16;
+
   for (let attempt = 0; attempt < config.SPAWN_ATTEMPTS; attempt += 1) {
     const candidate = {
-      x: randomIn(-config.X_RANGE, config.X_RANGE),
-      y: randomIn(yMin, yMax)
+      x: clamp(
+        anchorX + slotOffset.x + randomIn(-localXSpread, localXSpread),
+        -config.X_RANGE,
+        config.X_RANGE
+      ),
+      y: clamp(
+        anchorY + slotOffset.y + randomIn(-localYSpread, localYSpread),
+        yMin,
+        yMax
+      )
     };
 
     let minDistance = Infinity;
@@ -97,10 +238,14 @@ function pickSpawnPoint({ cards, config, z, ignoreId }) {
     for (let i = 0; i < nearbyCards.length; i += 1) {
       const other = nearbyCards[i];
       const distance = Math.hypot(candidate.x - other.x, candidate.y - other.y);
-      minDistance = Math.min(minDistance, distance);
+      const sameCluster = other.projectKey === projectKey && other.layerIndex === layerIndex;
+      const requiredDistance = config.MIN_CARD_DISTANCE * (
+        sameCluster ? 0.58 : other.projectKey === projectKey ? 0.82 : 1.1
+      );
+      minDistance = Math.min(minDistance, distance - requiredDistance);
     }
 
-    if (nearbyCards.length === 0 || minDistance >= config.MIN_CARD_DISTANCE) {
+    if (nearbyCards.length === 0 || minDistance >= 0) {
       return candidate;
     }
 
@@ -112,8 +257,16 @@ function pickSpawnPoint({ cards, config, z, ignoreId }) {
 
   return (
     bestCandidate || {
-      x: randomIn(-config.X_RANGE, config.X_RANGE),
-      y: randomIn(yMin, yMax)
+      x: clamp(
+        anchorX + slotOffset.x + randomIn(-localXSpread, localXSpread),
+        -config.X_RANGE,
+        config.X_RANGE
+      ),
+      y: clamp(
+        anchorY + slotOffset.y + randomIn(-localYSpread, localYSpread),
+        yMin,
+        yMax
+      )
     }
   );
 }
@@ -131,45 +284,97 @@ function getDistanceBlur(z, config) {
 
 export function createGallery({ railEl, cardCount, config, interactions }) {
   const cards = [];
+  const floatingItems = buildFloatingItems(cardCount);
   const rangeZ = Math.max(1, config.Z_NEAR - config.Z_FAR_START);
+  const layerStateByIndex = new Map();
 
-  for (let i = 0; i < cardCount; i += 1) {
-    const project = PLACEHOLDER_PROJECTS[i % PLACEHOLDER_PROJECTS.length];
-    const cardId = `${project.id}-${i + 1}`;
+  for (let i = 0; i < floatingItems.length; i += 1) {
+    const item = floatingItems[i];
+    const cardId = `${item.id}-${i + 1}`;
     const cardEl = document.createElement("article");
     cardEl.className = "project-card";
     cardEl.dataset.id = cardId;
 
+    if (!layerStateByIndex.has(item.layerIndex)) {
+      layerStateByIndex.set(item.layerIndex, {
+        hoverCount: 0,
+        hoverBlend: 0,
+        orderOffset: 0
+      });
+    }
+
+    const mediaEl = document.createElement("div");
+    mediaEl.className = "project-media";
+
+    const imageEl = document.createElement("img");
+    imageEl.className = "project-image";
+    const layerState = layerStateByIndex.get(item.layerIndex);
+    imageEl.src = getThumbnailForSlot({
+      layerIndex: item.layerIndex,
+      slotIndex: item.slotIndex,
+      orderOffset: layerState ? layerState.orderOffset : 0
+    }) || item.thumbnailSrc;
+    imageEl.alt = `${item.title} thumbnail`;
+    imageEl.loading = "lazy";
+    imageEl.decoding = "async";
+
+    mediaEl.appendChild(imageEl);
+
+    const metaEl = document.createElement("div");
+    metaEl.className = "project-meta";
+
     const categoryEl = document.createElement("p");
     categoryEl.className = "project-category";
-    categoryEl.textContent = project.category;
+    categoryEl.textContent = item.category;
 
     const titleEl = document.createElement("h2");
     titleEl.className = "project-title";
-    titleEl.textContent = project.title;
+    titleEl.textContent = item.title;
 
-    cardEl.append(categoryEl, titleEl);
+    metaEl.append(categoryEl, titleEl);
 
-    if (project.href) {
+    if (item.href) {
       const openLinkEl = document.createElement("a");
       openLinkEl.className = "project-open-link";
-      openLinkEl.href = project.href;
+      openLinkEl.href = item.href;
       openLinkEl.textContent = "Open project";
       openLinkEl.addEventListener("click", (event) => {
         event.stopPropagation();
       });
-      cardEl.appendChild(openLinkEl);
+      metaEl.appendChild(openLinkEl);
     }
 
+    mediaEl.appendChild(metaEl);
+    cardEl.appendChild(mediaEl);
     railEl.appendChild(cardEl);
 
-    const z = config.Z_FAR_START + i * config.Z_SPACING;
-    const spawn = pickSpawnPoint({ cards, config, z, ignoreId: cardId });
+    const slotOffsetForCount = getSlotOffsetForCount(item.slotIndex, item.slotCount);
+    const clusterBaseZ = getClusterBaseZ({
+      layerIndex: item.layerIndex
+    });
+    const z = clusterBaseZ + slotOffsetForCount.z;
+    const spawn = pickSpawnPoint({
+      cards,
+      config,
+      z,
+      ignoreId: cardId,
+      projectKey: item.projectKey,
+      layerIndex: item.layerIndex,
+      slotIndex: item.slotIndex,
+      slotCount: item.slotCount
+    });
 
     const card = {
       id: cardId,
       index: i,
       el: cardEl,
+      projectKey: item.projectKey,
+      projectIndex: item.projectIndex,
+      layerIndex: item.layerIndex,
+      slotIndex: item.slotIndex,
+      slotCount: item.slotCount,
+      slotScale: slotOffsetForCount.scale,
+      imageEl,
       x: spawn.x,
       y: spawn.y,
       z,
@@ -194,23 +399,54 @@ export function createGallery({ railEl, cardCount, config, interactions }) {
       event.stopPropagation();
       interactions.setFocus(card.id);
     });
-    cardEl.addEventListener("pointerenter", () => {
+    mediaEl.addEventListener("pointerenter", () => {
       card.hovered = true;
+      const layerState = layerStateByIndex.get(card.layerIndex);
+      if (layerState) {
+        layerState.hoverCount += 1;
+      }
     });
-    cardEl.addEventListener("pointerleave", () => {
+    mediaEl.addEventListener("pointerleave", () => {
       card.hovered = false;
+      const layerState = layerStateByIndex.get(card.layerIndex);
+      if (layerState) {
+        layerState.hoverCount = Math.max(0, layerState.hoverCount - 1);
+      }
     });
 
     cards.push(card);
   }
 
   const recycleCard = (card) => {
-    card.z = config.Z_FAR_START;
+    const layerState = layerStateByIndex.get(card.layerIndex);
+    const thumbnails = getLayerThumbnails(card.layerIndex);
+    if (layerState && thumbnails.length && card.slotIndex === getFrontSlotIndex(card.slotCount)) {
+      layerState.orderOffset = (layerState.orderOffset + 1) % thumbnails.length;
+    }
+    const orderOffset = layerState ? layerState.orderOffset : 0;
+    const nextThumbSrc = getThumbnailForSlot({
+      layerIndex: card.layerIndex,
+      slotIndex: card.slotIndex,
+      orderOffset
+    });
+    if (nextThumbSrc) {
+      card.imageEl.src = nextThumbSrc;
+    }
+
+    const slotOffset = getSlotOffsetForCount(card.slotIndex, card.slotCount);
+    const clusterBaseZ = getClusterBaseZ({
+      layerIndex: card.layerIndex
+    });
+    card.z = clusterBaseZ + slotOffset.z;
     const spawn = pickSpawnPoint({
       cards,
       config,
       z: card.z,
-      ignoreId: card.id
+      ignoreId: card.id,
+      projectKey: card.projectKey,
+      layerIndex: card.layerIndex,
+      slotIndex: card.slotIndex,
+      slotCount: card.slotCount
     });
     card.x = spawn.x;
     card.y = spawn.y;
@@ -238,6 +474,15 @@ export function createGallery({ railEl, cardCount, config, interactions }) {
     const driftSpeed =
       runtime.driftSpeed + sharedBoost * config.CARD_SPEED_BOOST_MULTIPLIER;
     let maxFocusBlend = 0;
+    layerStateByIndex.forEach((layerState) => {
+      const target = layerState.hoverCount > 0 ? 1 : 0;
+      layerState.hoverBlend = damp(
+        layerState.hoverBlend,
+        target,
+        config.HOVER_OPACITY_EASE,
+        dt
+      );
+    });
 
     for (let i = 0; i < cards.length; i += 1) {
       const card = cards[i];
@@ -271,8 +516,8 @@ export function createGallery({ railEl, cardCount, config, interactions }) {
       const depthN = clamp((card.z - config.Z_FAR_START) / rangeZ, 0, 1);
       const bob =
         Math.sin(t * config.BOB_SPEED * Math.PI * 2 + card.phase) *
-        config.BOB_AMPLITUDE_PX
-        * runtime.bobMultiplier;
+        config.BOB_AMPLITUDE_PX *
+        runtime.bobMultiplier;
 
       const x = card.x;
       const y = card.y + bob;
@@ -282,20 +527,24 @@ export function createGallery({ railEl, cardCount, config, interactions }) {
         1,
         config.CARD_STYLE.scaleFar,
         config.CARD_STYLE.scaleNear
-      );
+      ) * card.slotScale;
       const blurPx = isFocusedCard
         ? 0
         : getDistanceBlur(card.z, config) * runtime.blurMultiplier;
       const rotateY = card.baseRotateY;
       const rotateX = card.baseRotateX;
-      const opacity = isFocusedCard
+      const depthOpacityBlend = smoothstep(-2200, -820, card.z);
+      const depthOpacityFactor = isFocusedCard
         ? 1
-        : distanceOpacity * config.CARD_STYLE.baseOpacity;
+        : lerp(0.72, 1, depthOpacityBlend);
+      const opacity = isFocusedCard ? 1 : distanceOpacity;
       const hoverOpacityFactor = lerp(
-        config.CARD_IDLE_OPACITY,
-        config.CARD_HOVER_OPACITY,
+        1,
+        1,
         card.hoverBlend
       );
+      const layerState = layerStateByIndex.get(card.layerIndex);
+      const clusterHoverBlend = layerState ? layerState.hoverBlend : 0;
 
       card.frame = {
         driftX: x,
@@ -306,7 +555,9 @@ export function createGallery({ railEl, cardCount, config, interactions }) {
         driftRotateX: rotateX,
         driftBlur: blurPx,
         baseOpacity: opacity,
-        hoverOpacityFactor
+        hoverOpacityFactor,
+        depthOpacityFactor,
+        clusterHoverBlend
       };
     }
 
@@ -323,8 +574,11 @@ export function createGallery({ railEl, cardCount, config, interactions }) {
       const z = lerp(frame.driftZ, config.FOCUS_Z, blend);
       const rotateY = lerp(frame.driftRotateY, 0, blend);
       const rotateX = lerp(frame.driftRotateX, 0, blend);
-      const scale = lerp(frame.driftScale, config.FOCUS_SCALE, blend);
+      const clusterScaleBoost = lerp(1, 1.055, frame.clusterHoverBlend);
+      const clusterZBoost = lerp(0, 56, frame.clusterHoverBlend);
+      const scale = lerp(frame.driftScale * clusterScaleBoost, config.FOCUS_SCALE, blend);
       const blurPx = frame.driftBlur * (1 - blend);
+      const zWithHover = z + clusterZBoost * (1 - blend);
 
       const dimOpacity =
         hasFocus && !isFocusedCard
@@ -334,14 +588,14 @@ export function createGallery({ railEl, cardCount, config, interactions }) {
         ? config.CARD_HOVER_OPACITY
         : frame.hoverOpacityFactor;
       const opacity = clamp(
-        frame.baseOpacity * opacityFactor * dimOpacity,
+        frame.baseOpacity * frame.depthOpacityFactor * opacityFactor * dimOpacity,
         0,
         1
       );
 
       card.el.style.transform = `translate3d(${x.toFixed(2)}px, ${y.toFixed(
         2
-      )}px, ${z.toFixed(2)}px) rotateY(${rotateY.toFixed(
+      )}px, ${zWithHover.toFixed(2)}px) rotateY(${rotateY.toFixed(
         2
       )}deg) rotateX(${rotateX.toFixed(2)}deg) scale(${scale.toFixed(4)})`;
       card.el.style.opacity = opacity.toFixed(3);
@@ -349,5 +603,5 @@ export function createGallery({ railEl, cardCount, config, interactions }) {
     }
   };
 
-  return { update, PLACEHOLDER_PROJECTS };
+  return { update, PROJECT_DEFINITIONS };
 }

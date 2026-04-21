@@ -27,9 +27,7 @@
 
       body {
         margin: 0;
-        background:
-          radial-gradient(125% 86% at 50% 54%, rgba(255, 236, 204, 0.05) 0%, rgba(255, 236, 204, 0) 52%),
-          linear-gradient(180deg, #080809 0%, #050505 100%);
+        background: linear-gradient(180deg, #080809 0%, #050505 100%);
         color: var(--ink);
         font-family: "Avenir Next", "Segoe UI Variable", "SF Pro Display", "Helvetica Neue", Arial, sans-serif;
         -webkit-font-smoothing: antialiased;
@@ -43,6 +41,30 @@
         width: 100%;
         display: grid;
         place-items: center;
+      }
+
+      .back-link {
+        position: fixed;
+        top: clamp(16px, 2.4vw, 28px);
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 20;
+        text-decoration: none;
+        text-transform: uppercase;
+        font-size: clamp(0.86rem, 0.95vw, 1.04rem);
+        letter-spacing: 0.22em;
+        font-weight: 540;
+        color: rgba(241, 237, 232, 0.72);
+        transition: color 180ms ease, opacity 180ms ease;
+      }
+
+      .back-link:hover,
+      .back-link:focus-visible {
+        color: rgba(241, 237, 232, 0.96);
+      }
+
+      .back-link:focus-visible {
+        outline: none;
       }
 
       .index-layout {
@@ -262,6 +284,8 @@
     </style>
   </head>
   <body>
+    <a class="back-link" href="/index.html">SUNSET</a>
+
     <main class="shell">
       <section class="index-layout" aria-label="Project index">
         <section class="wheel-wrap" aria-label="Project list wheel">
@@ -289,7 +313,7 @@
           {
             year: "2025",
             title: "Event",
-            category: "Visual Story",
+            category: "Screening Event",
             href: "/projects/event.html",
             previewImage: "/assets/projects/event/event1.png",
           },
@@ -328,7 +352,6 @@
         let rowHeight = Number.parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--row-height")) || 74;
 
         let currentOffset = 0;
-        let targetOffset = 0;
         let velocity = 0;
 
         let isPointerDown = false;
@@ -339,7 +362,6 @@
         let lastPointerT = 0;
 
         let lastFrameTime = performance.now();
-        let snapDeadline = 0;
         let activeVirtualIndex = 0;
         let activeProjectIndex = 0;
         let lastDragEndedAt = -1;
@@ -351,14 +373,6 @@
 
         function mod(n, m) {
           return ((n % m) + m) % m;
-        }
-
-        function scheduleSnap(delay = 140) {
-          snapDeadline = performance.now() + delay;
-        }
-
-        function clearSnap() {
-          snapDeadline = 0;
         }
 
         function openProjectByIndex(projectIndex) {
@@ -496,8 +510,7 @@
             const top = centerY + yOffset - rowHeight * 0.5;
 
             const centered = virtualIndex === activeVirtualIndex;
-            const closeToCenter = Math.abs(currentOffset - activeVirtualIndex * rowHeight) <= rowHeight * 0.26;
-            const clickable = centered && closeToCenter;
+            const clickable = centered;
 
             row.dataset.virtualIndex = String(virtualIndex);
             row.dataset.projectIndex = String(projectIndex);
@@ -523,20 +536,19 @@
           lastFrameTime = now;
 
           if (!isDragging) {
-            const spring = (targetOffset - currentOffset) * 0.11 * dt;
-            velocity += spring;
-            velocity *= Math.pow(0.82, dt);
-            currentOffset += velocity * dt;
-          }
+            velocity *= Math.pow(0.84, dt);
 
-          if (!isDragging && snapDeadline > 0 && now >= snapDeadline) {
-            targetOffset = Math.round(targetOffset / rowHeight) * rowHeight;
+            // Gentle magnetic settle toward the nearest row without hard snapping.
+            const nearestRowOffset = Math.round(currentOffset / rowHeight) * rowHeight;
+            const distanceToNearest = nearestRowOffset - currentOffset;
+            const magnetMix = Math.max(0, 1 - Math.min(1, Math.abs(velocity) / 2.2));
+            velocity += distanceToNearest * 0.02 * magnetMix * dt;
 
-            if (Math.abs(targetOffset - currentOffset) < 0.12 && Math.abs(velocity) < 0.12) {
-              currentOffset = targetOffset;
+            if (Math.abs(velocity) < 0.006 && Math.abs(distanceToNearest) < 0.006) {
               velocity = 0;
-              snapDeadline = 0;
             }
+
+            currentOffset += velocity * dt;
           }
 
           updateRows();
@@ -547,10 +559,9 @@
           "wheel",
           (event) => {
             event.preventDefault();
-            clearSnap();
-            targetOffset += event.deltaY * 0.54;
-            velocity += event.deltaY * 0.018;
-            scheduleSnap(150);
+            currentOffset += event.deltaY * 0.34;
+            velocity += event.deltaY * 0.012;
+            velocity = Math.max(-48, Math.min(48, velocity));
           },
           { passive: false }
         );
@@ -562,8 +573,7 @@
           pointerTravel = 0;
           lastPointerY = event.clientY;
           lastPointerT = performance.now();
-          velocity = 0;
-          clearSnap();
+          velocity *= 0.35;
         });
 
         wheelEl.addEventListener("pointermove", (event) => {
@@ -585,7 +595,6 @@
 
           if (isDragging) {
             currentOffset += deltaY;
-            targetOffset += deltaY;
             velocity = (deltaY / dt) * 15;
           }
 
@@ -612,7 +621,6 @@
 
           if (wasDragging) {
             lastDragEndedAt = performance.now();
-            scheduleSnap(120);
           }
         }
 
@@ -622,7 +630,6 @@
 
         window.addEventListener("resize", () => {
           rowHeight = Number.parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--row-height")) || 74;
-          scheduleSnap(10);
         });
 
         syncRowPoolSize();

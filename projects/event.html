@@ -8,6 +8,7 @@
       :root {
         --bg: #050505;
         --ink: #f2eee8;
+        --ink-muted: rgba(242, 238, 232, 0.72);
       }
 
       * {
@@ -23,22 +24,52 @@
         font-family: "Avenir Next", "Segoe UI", Arial, sans-serif;
       }
 
-      .top {
-        margin: 0;
-        padding: 10px 0 8px;
-      }
-
-      .top h1 {
-        margin: 0;
-        font-size: clamp(1.1rem, 2.1vw, 1.6rem);
-        font-weight: 520;
-        letter-spacing: 0.04em;
-        text-transform: uppercase;
-      }
-
       .stack {
         display: grid;
         gap: 0;
+      }
+
+      .intro {
+        padding: clamp(120px, 18vh, 230px) clamp(24px, 7vw, 120px)
+          clamp(190px, 25vh, 340px);
+      }
+
+      .intro-inner {
+        display: grid;
+        grid-template-columns: minmax(100px, 150px) minmax(260px, 430px) minmax(320px, 1fr);
+        column-gap: clamp(30px, 4.6vw, 86px);
+        align-items: start;
+        width: 100%;
+        max-width: none;
+      }
+
+      .intro-label {
+        margin: 0;
+        font-size: 0.58rem;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--ink-muted);
+        line-height: 1.35;
+      }
+
+      .intro-text {
+        margin: 0;
+        font-size: clamp(0.76rem, 0.82vw, 0.86rem);
+        line-height: 1.45;
+        letter-spacing: 0.01em;
+        color: var(--ink);
+        max-width: 410px;
+      }
+
+      .intro-tech {
+        margin: 0;
+        font-size: 0.64rem;
+        line-height: 1.35;
+        letter-spacing: 0.02em;
+        color: rgba(242, 238, 232, 0.62);
+        justify-self: end;
+        width: min(440px, 100%);
+        text-align: right;
       }
 
       .full {
@@ -65,14 +96,49 @@
         border-bottom: 1px solid currentColor;
         padding-bottom: 2px;
       }
+
+      @media (max-width: 900px) {
+        .intro {
+          padding: 90px 24px 132px;
+        }
+
+        .intro-inner {
+          grid-template-columns: 1fr;
+          row-gap: 12px;
+          max-width: 460px;
+        }
+
+        .intro-tech {
+          margin-top: 2px;
+          justify-self: start;
+          width: auto;
+          text-align: left;
+        }
+      }
     </style>
   </head>
   <body>
-    <header class="top">
-      <h1>Event</h1>
-    </header>
-
     <main class="stack">
+      <section class="intro">
+        <div class="intro-inner">
+          <p class="intro-label">EVENT — FILM SHOWCASE</p>
+          <p class="intro-text">
+            A two-day film screening event built as an immersive social and
+            exhibition space. Alongside the screenings, the project included a
+            room for music, socialising, and buying work, creating a more open
+            and communal atmosphere around the films. The event was successful
+            and profitable, bringing together presentation, environment, and
+            live audience experience.
+          </p>
+          <p class="intro-tech">
+            SPATIAL DESIGN<br />
+            FILM REEL EDITING<br />
+            MUSIC CURATION<br />
+            LIVE TECHNICIAN
+          </p>
+        </div>
+      </section>
+
       <section class="full">
         <img src="../assets/projects/event/event1.png" alt="Event image 1" loading="lazy" />
       </section>
